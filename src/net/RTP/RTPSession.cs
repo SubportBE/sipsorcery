@@ -34,7 +34,7 @@ namespace SIPSorcery.Net
     public enum SetDescriptionResultEnum
     {
         OK,
-        NoneCompatible,
+        None,
         AudioIncompatible,
         VideoIncompatible
     }
@@ -636,6 +636,7 @@ namespace SIPSorcery.Net
         /// <returns>If successful an OK enum result. If not an enum result indicating the failure cause.</returns>
         public SetDescriptionResultEnum SetRemoteDescription(SDP sessionDescription)
         {
+            bool foundTrack = false;
             IPAddress connectionAddress = null;
 
             if (sessionDescription.Connection != null && !String.IsNullOrEmpty(sessionDescription.Connection.ConnectionAddress))
@@ -704,6 +705,8 @@ namespace SIPSorcery.Net
                             break;
                         }
                     }
+
+                    foundTrack = true;
                 }
                 else if (announcement.Media == SDPMediaTypesEnum.video)
                 {
@@ -743,6 +746,8 @@ namespace SIPSorcery.Net
                         remoteVideoRtpEP = new IPEndPoint(videoAddr, videoAnnounce.Port);
                         remoteVideoRtcpEP = new IPEndPoint(videoAddr, videoAnnounce.Port + 1);
                     }
+
+                    foundTrack = true;
                 }
             }
 
@@ -756,7 +761,7 @@ namespace SIPSorcery.Net
             VideoDestinationEndPoint = remoteVideoRtpEP ?? VideoDestinationEndPoint;
             VideoControlDestinationEndPoint = remoteVideoRtcpEP ?? VideoControlDestinationEndPoint;
 
-            return SetDescriptionResultEnum.OK;
+            return foundTrack ? SetDescriptionResultEnum.OK : SetDescriptionResultEnum.None;
         }
 
         /// <summary>
