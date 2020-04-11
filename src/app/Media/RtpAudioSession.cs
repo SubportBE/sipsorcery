@@ -128,11 +128,11 @@ namespace SIPSorcery.Media
                 {
                     _isStarted = true;
 
-                    if (AudioLocalTrack == null || AudioLocalTrack.Capabilties == null || AudioLocalTrack.Capabilties.Count == 0)
+                    if (AudioLocalTrack == null || AudioLocalTrack.Capabilities == null || AudioLocalTrack.Capabilities.Count == 0)
                     {
                         throw new ApplicationException("Cannot start audio session without a local audio track being available.");
                     }
-                    else if (AudioRemoteTrack == null || AudioRemoteTrack.Capabilties == null || AudioRemoteTrack.Capabilties.Count == 0)
+                    else if (AudioRemoteTrack == null || AudioRemoteTrack.Capabilities == null || AudioRemoteTrack.Capabilities.Count == 0)
                     {
                         throw new ApplicationException("Cannot start audio session without a remote audio track being available.");
                     }

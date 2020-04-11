@@ -34,6 +34,7 @@ namespace SIPSorcery.Net
     public enum SetDescriptionResultEnum
     {
         OK,
+        NoneCompatible,
         AudioIncompatible,
         VideoIncompatible
     }
@@ -76,7 +77,7 @@ namespace SIPSorcery.Net
         /// <summary>
         /// The media capabilities supported by this track.
         /// </summary>
-        public List<SDPMediaFormat> Capabilties { get; internal set; }
+        public List<SDPMediaFormat> Capabilities { get; internal set; }
 
         /// <summary>
         /// Holds the stream state of the track.
@@ -108,7 +109,7 @@ namespace SIPSorcery.Net
         {
             Kind = kind;
             IsRemote = isRemote;
-            Capabilties = capabilties;
+            Capabilities = capabilties;
             StreamStatus = streamStatus;
 
             if (!isRemote)
@@ -140,7 +141,7 @@ namespace SIPSorcery.Net
         /// <returns>True if the payload ID matches one of the codecs for this stream. False if not.</returns>
         public bool IsPayloadIDMatch(int payloadID)
         {
-            return Capabilties.Any(x => x.FormatID == payloadID.ToString());
+            return Capabilities.Any(x => x.FormatID == payloadID.ToString());
         }
 
         /// <summary>
@@ -148,7 +149,7 @@ namespace SIPSorcery.Net
         /// </summary>
         public MediaStreamTrack CopyOf()
         {
-            List<SDPMediaFormat> capabilties = new List<SDPMediaFormat>(Capabilties);
+            List<SDPMediaFormat> capabilties = new List<SDPMediaFormat>(Capabilities);
             var copy = new MediaStreamTrack(MID, Kind, IsRemote, capabilties, StreamStatus);
             copy.Ssrc = Ssrc;
             copy.SeqNum = SeqNum;
@@ -569,10 +570,10 @@ namespace SIPSorcery.Net
                         {
                             var audioCopy = AudioLocalTrack.CopyOf();
                             var remoteAudioFormats = offer.Media.Where(x => x.Media == SDPMediaTypesEnum.audio).Single().MediaFormats;
-                            var audioCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(AudioLocalTrack.Capabilties, remoteAudioFormats);
+                            var audioCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(AudioLocalTrack.Capabilities, remoteAudioFormats);
 
                             // Set the capabilities on our audio track to the ones the remote party can use.
-                            audioCopy.Capabilties = audioCompatibleFormats;
+                            audioCopy.Capabilities = audioCompatibleFormats;
 
                             tracks.Add(audioCopy);
                         }
@@ -590,10 +591,10 @@ namespace SIPSorcery.Net
                         {
                             var videoCopy = VideoLocalTrack.CopyOf();
                             var remoteVideoFormats = offer.Media.Where(x => x.Media == SDPMediaTypesEnum.video).Single().MediaFormats;
-                            var videoCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilties, remoteVideoFormats);
+                            var videoCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilities, remoteVideoFormats);
 
                             // Set the capabilities on our video track to the ones the remote party can use.
-                            videoCopy.Capabilties = videoCompatibleFormats;
+                            videoCopy.Capabilities = videoCompatibleFormats;
 
                             tracks.Add(videoCopy);
                         }
@@ -657,8 +658,15 @@ namespace SIPSorcery.Net
                 {
                     var audioAnnounce = announcement;
 
+                    var audioLocalTrack = AudioLocalTrack;
+
+                    if (audioLocalTrack == null)
+                    {
+                        continue;
+                    }
+
                     // Check that there is at least one compatible non-"RTP Event" audio codec.
-                    var audioCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(AudioLocalTrack.Capabilties, audioAnnounce.MediaFormats);
+                    var audioCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(audioLocalTrack.Capabilities, audioAnnounce.MediaFormats);
                     if(audioCompatibleFormats?.Count == 0)
                     {
                         return SetDescriptionResultEnum.AudioIncompatible;
@@ -701,8 +709,15 @@ namespace SIPSorcery.Net
                 {
                     var videoAnnounce = announcement;
 
+                    var videoLocalTrack = VideoLocalTrack;
+
+                    if (videoLocalTrack == null)
+                    {
+                        continue;
+                    }
+
                     // Check that there is at least one compatible non-"RTP Event" video codec.
-                    var videoCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilties, videoAnnounce.MediaFormats);
+                    var videoCompatibleFormats = SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilities, videoAnnounce.MediaFormats);
                     if (videoCompatibleFormats?.Count == 0)
                     {
                         return SetDescriptionResultEnum.VideoIncompatible;
@@ -817,7 +832,7 @@ namespace SIPSorcery.Net
             foreach (var track in tracks)
             {
                 int rtpPort = 0; // A port of zero means the media type is not supported.
-                if (track.Capabilties != null && track.Capabilties.Count() > 0)
+                if (track.Capabilities != null && track.Capabilities.Count() > 0)
                 {
                     rtpPort = (m_isMediaMultiplexed) ? m_rtpChannels.Single().Value.RTPPort : m_rtpChannels[track.Kind].RTPPort;
                 }
@@ -825,7 +840,7 @@ namespace SIPSorcery.Net
                 SDPMediaAnnouncement announcement = new SDPMediaAnnouncement(
                    track.Kind,
                    rtpPort,
-                   track.Capabilties);
+                   track.Capabilities);
 
                 announcement.Transport = RTP_MEDIA_PROFILE;
                 announcement.MediaStreamStatus = AudioLocalTrack.StreamStatus;
@@ -974,7 +989,7 @@ namespace SIPSorcery.Net
             {
                 if (AudioLocalTrack != null && AudioRemoteTrack != null)
                 {
-                    var format = SDPMediaFormat.GetCompatibleFormats(AudioLocalTrack.Capabilties, AudioRemoteTrack.Capabilties)
+                    var format = SDPMediaFormat.GetCompatibleFormats(AudioLocalTrack.Capabilities, AudioRemoteTrack.Capabilities)
                         .Where(x => x.FormatID != RemoteRtpEventPayloadID.ToString()).FirstOrDefault();
 
                     if(format == null)
@@ -997,7 +1012,7 @@ namespace SIPSorcery.Net
             {
                 if (VideoLocalTrack != null && VideoRemoteTrack != null)
                 {
-                    return SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilties, VideoRemoteTrack.Capabilties).First();
+                    return SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilities, VideoRemoteTrack.Capabilities).First();
                 }
                 else
                 {
