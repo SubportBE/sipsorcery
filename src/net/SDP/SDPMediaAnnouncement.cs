@@ -173,7 +173,7 @@ namespace SIPSorcery.Net
                 }
             }
 
-            if(IceOptions != null)
+            if (IceOptions != null)
             {
                 announcement += $"a={SDP.ICE_OPTIONS}:" + IceOptions + m_CRLF;
             }
@@ -205,16 +205,7 @@ namespace SIPSorcery.Net
             return announcement;
         }
 
-        public string GetFormatListToString()
-        {
-            string mediaFormatList = null;
-            foreach (SDPMediaFormat mediaFormat in MediaFormats)
-            {
-                mediaFormatList += mediaFormat.FormatID + " ";
-            }
-
-            return (mediaFormatList != null) ? mediaFormatList.Trim() : null;
-        }
+        public string GetFormatListToString() => MediaFormats == null || MediaFormats.Count == 0 ? null : String.Join(" ", MediaFormats.Select(mf => mf.FormatID));        
 
         public string GetFormatListAttributesToString()
         {
