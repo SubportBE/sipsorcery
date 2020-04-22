@@ -482,7 +482,8 @@ namespace SIPSorcery.Net
                 var audioCapabilities = AudioLocalTrack?.Capabilities;
                 var videoCapabilities = VideoLocalTrack?.Capabilities;
 
-                var offerSdp = await createBaseSdp(m_tracks.Where(x => x.IsRemote == false).ToList(), audioCapabilities, videoCapabilities).ConfigureAwait(false);
+                List<MediaStreamTrack> localTracks = GetLocalTracks();
+                var offerSdp = await createBaseSdp(localTracks, audioCapabilities, videoCapabilities).ConfigureAwait(false);
 
                 RTCSessionDescriptionInit initDescription = new RTCSessionDescriptionInit
                 {
@@ -521,7 +522,8 @@ namespace SIPSorcery.Net
                 var videoCapabilities = (VideoLocalTrack != null && VideoRemoteTrack != null) ?
                     SDPMediaFormat.GetCompatibleFormats(VideoLocalTrack.Capabilities, VideoRemoteTrack.Capabilities) : null;
 
-                var answerSdp = await createBaseSdp(m_tracks.Where(x => x.IsRemote == false).ToList(), audioCapabilities, videoCapabilities).ConfigureAwait(false);
+                List<MediaStreamTrack> localTracks = GetLocalTracks();
+                var answerSdp = await createBaseSdp(localTracks, audioCapabilities, videoCapabilities).ConfigureAwait(false);
 
                 if (answerSdp.Media.Any(x => x.Media == SDPMediaTypesEnum.audio))
                 {
